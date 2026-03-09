@@ -14,7 +14,7 @@
 
         h2 {
             text-align: center;
-            color: #ee4d2d; /* Màu cam Shopee */
+            color: #ee4d2d; 
             text-transform: uppercase;
             margin-bottom: 30px;
         }
@@ -47,16 +47,16 @@
         .card img {
             width: 100%;
             height: 180px;
-            object-fit: cover;
+            object-fit: contain; /* Giúp ảnh không bị méo */
             border-radius: 8px;
-            background: #eee;
+            background: #fff;
         }
 
         .card h3 {
             font-size: 14px;
             color: #333;
             margin: 10px 0;
-            height: 40px; /* Giới hạn 2 dòng tên */
+            height: 40px; 
             overflow: hidden;
             display: -webkit-box;
             -webkit-line-clamp: 2;
@@ -84,6 +84,8 @@
         .btn-buy:hover {
             opacity: 0.9;
         }
+        
+        .loading { text-align: center; grid-column: 1/-1; padding: 50px; }
     </style>
 </head>
 <body>
@@ -91,20 +93,37 @@
     <h2>🔥 Danh Sách Sản Phẩm Hot 🔥</h2>
 
     <div class="grid" id="products">
-        </div>
+        <div class="loading">Đang tải dữ liệu từ hệ thống...</div>
+    </div>
 
     <script>
-        const API = "https://script.google.com/macros/s/AKfycbzj1qkd3XA3xXyFYxSvc43VlwXSbUu58D5CwmU7V78fjDYUxFH1Ha64n5EmeNZJlc1O9A/exec";
+        // Link TSV công khai từ Google Sheets của bạn
+        const TSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6o3x_ZHmwp0UFTMCXkUuFMWpXuLaKjO29mVSSho1b0Uo9Nk_ICRUCwF-aLD9IO5PLHTO2AUiw555j/pub?gid=0&single=true&output=tsv";
 
-        fetch(API)
-            .then(res => res.json())
-            .then(data => {
-                let html = "";
+        async function loadData() {
+            try {
+                const response = await fetch(TSV_URL);
+                const text = await response.text();
                 
-                data.forEach(p => {
-                    // Kiểm tra nếu hàng có tên và link thì mới hiển thị (tránh hàng trống)
-                    if (p.name && p.link && p.name.trim() !== "") {
-                        // Xử lý ảnh mặc định nếu link ảnh bị lỗi
+                // Chia dữ liệu thành các dòng
+                const rows = text.split('\n');
+                let html = "";
+
+                // Bắt đầu từ dòng 1 (bỏ qua tiêu đề)
+                for (let i = 1; i < rows.length; i++) {
+                    const cols = rows[i].split('\t'); // Tách cột bằng phím Tab
+                    
+                    if (cols.length < 2) continue; // Bỏ qua dòng trống
+
+                    // Map dữ liệu theo thứ tự cột trong Sheet của bạn
+                    const p = {
+                        name: cols[0] ? cols[0].trim() : "Sản phẩm",
+                        price: cols[1] ? cols[1].trim() : "Liên hệ",
+                        image: cols[2] ? cols[2].trim() : "",
+                        link: cols[3] ? cols[3].trim() : "#"
+                    };
+
+                    if (p.name && p.link !== "#") {
                         const imgUrl = p.image || 'https://via.placeholder.com/200x200?text=No+Image';
                         
                         html += `
@@ -118,15 +137,18 @@
                         </div>
                         `;
                     }
-                });
+                }
 
-                document.getElementById("products").innerHTML = html;
-            })
-            .catch(err => {
-                console.error("Lỗi tải dữ liệu:", err);
-                document.getElementById("products").innerHTML = "<p>Đang tải dữ liệu hoặc có lỗi xảy ra...</p>";
-            });
+                document.getElementById("products").innerHTML = html || "<p>Chưa có sản phẩm nào được hiển thị.</p>";
+
+            } catch (error) {
+                console.error("Lỗi:", error);
+                document.getElementById("products").innerHTML = "<p>Lỗi kết nối dữ liệu. Vui lòng kiểm tra lại link Sheet.</p>";
+            }
+        }
+
+        // Chạy hàm khi trang web tải xong
+        window.onload = loadData;
     </script>
 </body>
 </html>
-
