@@ -66,6 +66,12 @@ text-decoration:none;
 margin-top:8px;
 }
 
+.loading{
+text-align:center;
+font-size:18px;
+padding:40px;
+}
+
 </style>
 
 </head>
@@ -76,36 +82,53 @@ margin-top:8px;
 
 <input id="searchInput" placeholder="Tìm sản phẩm...">
 
-<div id="productGrid" class="grid"></div>
+<div id="productGrid" class="grid">
+<div class="loading">Đang tải sản phẩm...</div>
+</div>
 
 <script>
 
-const SHEET_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vS6o3x_ZHmwp0UFTMCXkUuFMWpXuLaKjO29mVSSho1bOUo9Nk_ICRUCwF-aLD9IO5PLHTO2AUiw555j/pub?gid=0&single=true&output=tsv";
+const SHEET_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vS6o3x_ZHmwp0UFTMCXkUuFMWpXuLaKjO29mVSSho1b0Uo9Nk_ICRUCwF-aLD9IO5PLHTO2AUiw555j/pub?gid=0&single=true&output=csv";
 
 let allProducts=[];
 
 async function fetchData(){
 
+try{
+
 const res=await fetch(SHEET_URL+"&t="+Date.now());
 const text=await res.text();
 
-const rows=text.split("\n").slice(1);
+const rows=text.split(/\r?\n/).filter(r=>r.trim()!="");
 
-allProducts=rows.map(r=>{
+allProducts=rows.slice(1).map(r=>{
 
-const c=r.split("\t");
+const c=r.split(",");
+
+let img=c[3]||"";
+
+if(img && !img.startsWith("http")){
+img="https://cf.shopee.vn/file/"+img;
+}
 
 return{
-shop:c[0],
-name:c[1],
-price:c[2],
-image:c[3],
-link:c[4]
+shop:c[0]||"",
+name:c[1]||"",
+price:c[2]||"",
+image:img,
+link:c[4]||"#"
 };
 
 }).filter(p=>p.image);
 
 displayProducts(allProducts);
+
+}catch(e){
+
+document.getElementById("productGrid").innerHTML=
+"<div class='loading'>❌ Không tải được dữ liệu</div>";
+
+}
 
 }
 
@@ -113,11 +136,19 @@ function displayProducts(products){
 
 const grid=document.getElementById("productGrid");
 
+if(products.length===0){
+
+grid.innerHTML="<div class='loading'>Không có sản phẩm</div>";
+return;
+
+}
+
 grid.innerHTML=products.map(p=>`
 
 <div class="card">
 
-<img src="${p.image}" onerror="this.src='https://via.placeholder.com/300'">
+<img src="${p.image}" loading="lazy"
+onerror="this.src='https://via.placeholder.com/300?text=Shopee'">
 
 <div class="product-name">${p.name}</div>
 
@@ -136,7 +167,8 @@ document.getElementById("searchInput").addEventListener("input",e=>{
 const term=e.target.value.toLowerCase();
 
 const filtered=allProducts.filter(p=>
-p.name.toLowerCase().includes(term)
+p.name.toLowerCase().includes(term) ||
+p.shop.toLowerCase().includes(term)
 );
 
 displayProducts(filtered);
