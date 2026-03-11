@@ -1,74 +1,125 @@
 <script>
-    // 1. Dán link bạn vừa copy vào đây
-    const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6o3x_ZHmwp0UFTMCXkUuFMWpXuLaKjO29mVSSho1bOUo9Nk_ICRUCwF-aLD9IO5PLHTO2AUiw555j/pub?gid=0&single=true&output=tsv";
 
-    let allProducts = [];
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6o3x_ZHmwp0UFTMCXkUuFMWpXuLaKjO29mVSSho1bOUo9Nk_ICRUCwF-aLD9IO5PLHTO2AUiw555j/pub?gid=0&single=true&output=tsv";
 
-    async function fetchData() {
-        try {
-            // Thêm tham số thời gian để tránh trình duyệt lưu cache cũ
-            const response = await fetch(SHEET_URL + "&cache=" + Date.now());
-            const text = await response.text();
-            
-            // Vì bạn xuất ra định dạng TSV nên ta tách bằng dấu Tab (\t)
-            const rows = text.split(/\r?\n/).filter(r => r.trim() !== "");
-            
-            allProducts = rows.slice(1).map(row => {
-                const cols = row.split('\t'); // Tách cột bằng Tab
-                return {
-                    shop:  cols[0] || "Shopee",
-                    name:  cols[1] || "Sản phẩm",
-                    price: cols[2] || "Săn deal ngay",
-                    image: cols[3] || "", // Cột D
-                    link:  cols[4] || "#"
-                };
-            }).filter(p => p.image !== "");
+let allProducts = [];
 
-            displayProducts(allProducts);
-        } catch (err) {
-            console.error("Lỗi kết nối Sheet:", err);
-            document.getElementById('productGrid').innerHTML = "<div class='loading'>❌ Không thể kết nối dữ liệu từ Google Sheet.</div>";
-        }
+async function fetchData() {
+
+    try {
+
+        const response = await fetch(SHEET_URL + "&t=" + Date.now(), {
+            method: "GET",
+            cache: "no-store"
+        });
+
+        const text = await response.text();
+
+        const rows = text.split(/\r?\n/).filter(r => r.trim() !== "");
+
+        allProducts = rows.slice(1).map(row => {
+
+            const cols = row.split("\t");
+
+            return {
+                shop: cols[0] || "Shopee",
+                name: cols[1] || "Sản phẩm",
+                price: cols[2] || "Săn deal ngay",
+                image: cols[3] || "",
+                link: cols[4] || "#"
+            };
+
+        }).filter(p => p.image !== "");
+
+        displayProducts(allProducts);
+
+    } catch (err) {
+
+        console.error(err);
+
+        document.getElementById("productGrid").innerHTML =
+        "<div class='loading'>❌ Không tải được dữ liệu</div>";
+
     }
 
-    function displayProducts(products) {
-        const grid = document.getElementById('productGrid');
-        if (products.length === 0) {
-            grid.innerHTML = "<div class='loading'>⚠️ Đang chờ dữ liệu từ Sheet...</div>";
-            return;
-        }
+}
 
-        grid.innerHTML = products.map(p => {
-            // Tự động sửa link ảnh Shopee
-            let cleanImg = p.image;
-            if (cleanImg && !cleanImg.startsWith('http')) {
-                cleanImg = "https://down-bs-vn.img.susercontent.com/vn-" + cleanImg;
-            }
+function displayProducts(products) {
 
-            return `
-                <div class="card">
-                    <div class="img-box">
-                        <img src="${cleanImg}" loading="lazy" onerror="this.src='https://via.placeholder.com/400?text=Hình+Ảnh'">
-                    </div>
-                    <div class="info">
-                        <div class="shop-name">🏪 ${p.shop}</div>
-                        <div class="product-name">${p.name}</div>
-                        <div class="price">${p.price}</div>
-                        <a href="${p.link}" target="_blank" class="btn-buy">SĂN DEAL NGAY</a>
-                    </div>
-                </div>
-            `;
-        }).join('');
+    const grid = document.getElementById("productGrid");
+
+    if (products.length === 0) {
+
+        grid.innerHTML = "<div class='loading'>⚠️ Chưa có sản phẩm</div>";
+
+        return;
+
     }
 
-    // Bộ lọc tìm kiếm
-    document.getElementById('searchInput').addEventListener('input', (e) => {
-        const term = e.target.value.toLowerCase();
-        const filtered = allProducts.filter(p => 
-            p.name.toLowerCase().includes(term) || p.shop.toLowerCase().includes(term)
-        );
-        displayProducts(filtered);
-    });
+    grid.innerHTML = products.map(p => {
 
-    window.onload = fetchData;
+        let cleanImg = p.image;
+
+        if (cleanImg && !cleanImg.startsWith("http")) {
+            cleanImg = "https://cf.shopee.vn/file/" + cleanImg;
+        }
+
+        return `
+
+        <div class="card">
+
+            <div class="img-box">
+                <img src="${cleanImg}" loading="lazy"
+                onerror="this.src='https://via.placeholder.com/400?text=Shopee'">
+            </div>
+
+            <div class="info">
+
+                <div class="shop-name">🏪 ${escapeHTML(p.shop)}</div>
+
+                <div class="product-name">${escapeHTML(p.name)}</div>
+
+                <div class="price">${escapeHTML(p.price)}</div>
+
+                <a href="${p.link}" target="_blank"
+                rel="nofollow sponsored"
+                class="btn-buy">SĂN DEAL NGAY</a>
+
+            </div>
+
+        </div>
+
+        `;
+
+    }).join("");
+
+}
+
+function escapeHTML(str){
+
+return str.replace(/[&<>"']/g, m => ({
+"&":"&amp;",
+"<":"&lt;",
+">":"&gt;",
+'"':"&quot;",
+"'":"&#039;"
+})[m]);
+
+}
+
+document.getElementById("searchInput").addEventListener("input", e => {
+
+const term = e.target.value.toLowerCase();
+
+const filtered = allProducts.filter(p =>
+p.name.toLowerCase().includes(term) ||
+p.shop.toLowerCase().includes(term)
+);
+
+displayProducts(filtered);
+
+});
+
+window.onload = fetchData;
+
 </script>
