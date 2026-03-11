@@ -1,132 +1,151 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Shop sản phẩm</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f5f5f5;
+margin:0;
+padding:20px;
+}
+
+h1{
+text-align:center;
+}
+
+#searchInput{
+width:100%;
+padding:10px;
+margin-bottom:20px;
+font-size:16px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+gap:15px;
+}
+
+.card{
+background:#fff;
+border-radius:8px;
+padding:10px;
+box-shadow:0 2px 5px rgba(0,0,0,0.1);
+}
+
+.card img{
+width:100%;
+border-radius:6px;
+}
+
+.product-name{
+font-size:14px;
+margin:8px 0;
+}
+
+.price{
+color:red;
+font-weight:bold;
+}
+
+.btn{
+display:block;
+text-align:center;
+background:#ee4d2d;
+color:#fff;
+padding:8px;
+border-radius:5px;
+text-decoration:none;
+margin-top:8px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>Sản phẩm Shopee</h1>
+
+<input id="searchInput" placeholder="Tìm sản phẩm...">
+
+<div id="productGrid" class="grid"></div>
+
 <script>
 
-const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6o3x_ZHmwp0UFTMCXkUuFMWpXuLaKjO29mVSSho1bOUo9Nk_ICRUCwF-aLD9IO5PLHTO2AUiw555j/pub?gid=0&single=true&output=tsv";
+const SHEET_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vS6o3x_ZHmwp0UFTMCXkUuFMWpXuLaKjO29mVSSho1bOUo9Nk_ICRUCwF-aLD9IO5PLHTO2AUiw555j/pub?gid=0&single=true&output=tsv";
 
-let allProducts = [];
+let allProducts=[];
 
 async function fetchData(){
 
-try{
+const res=await fetch(SHEET_URL+"&t="+Date.now());
+const text=await res.text();
 
-const response = await fetch(SHEET_URL + "&t=" + Date.now(),{
-method:"GET",
-cache:"no-store"
-});
+const rows=text.split("\n").slice(1);
 
-const text = await response.text();
+allProducts=rows.map(r=>{
 
-const rows = text.split(/\r?\n/).filter(r=>r.trim()!=="");
-
-allProducts = rows.slice(1).map(row=>{
-
-const cols = row.split("\t");
+const c=r.split("\t");
 
 return{
-shop: cols[0] || "Shopee",
-name: cols[1] || "Sản phẩm",
-price: cols[2] || "",
-image: cols[3] || "",
-link: cols[4] || "#"
+shop:c[0],
+name:c[1],
+price:c[2],
+image:c[3],
+link:c[4]
 };
 
-}).filter(p=>p.image !== "");
+}).filter(p=>p.image);
 
 displayProducts(allProducts);
-
-}catch(err){
-
-console.error(err);
-
-document.getElementById("productGrid").innerHTML =
-"<div style='padding:20px'>❌ Không tải được dữ liệu</div>";
-
-}
 
 }
 
 function displayProducts(products){
 
-const grid = document.getElementById("productGrid");
+const grid=document.getElementById("productGrid");
 
-if(!grid) return;
-
-if(products.length===0){
-
-grid.innerHTML="<div style='padding:20px'>⚠️ Chưa có sản phẩm</div>";
-return;
-
-}
-
-grid.innerHTML = products.map(p=>{
-
-let cleanImg = p.image;
-
-if(cleanImg && !cleanImg.startsWith("http")){
-cleanImg = "https://cf.shopee.vn/file/" + cleanImg;
-}
-
-return `
+grid.innerHTML=products.map(p=>`
 
 <div class="card">
 
-<div class="img-box">
-<img src="${cleanImg}" loading="lazy"
-onerror="this.src='https://via.placeholder.com/400?text=Shopee'">
-</div>
+<img src="${p.image}" onerror="this.src='https://via.placeholder.com/300'">
 
-<div class="info">
+<div class="product-name">${p.name}</div>
 
-<div class="shop-name">🏪 ${escapeHTML(p.shop)}</div>
+<div class="price">${p.price}</div>
 
-<div class="product-name">${escapeHTML(p.name)}</div>
-
-<div class="price">${escapeHTML(p.price)}</div>
-
-<a href="${p.link}" target="_blank"
-rel="nofollow sponsored"
-class="btn-buy">SĂN DEAL NGAY</a>
+<a href="${p.link}" target="_blank" class="btn">Mua ngay</a>
 
 </div>
 
-</div>
-
-`;
-
-}).join("");
+`).join("");
 
 }
 
-function escapeHTML(str){
+document.getElementById("searchInput").addEventListener("input",e=>{
 
-return String(str).replace(/[&<>"']/g,m=>({
-"&":"&amp;",
-"<":"&lt;",
-">":"&gt;",
-'"':"&quot;",
-"'":"&#039;"
-})[m]);
+const term=e.target.value.toLowerCase();
 
-}
-
-const search = document.getElementById("searchInput");
-
-if(search){
-
-search.addEventListener("input",e=>{
-
-const term = e.target.value.toLowerCase();
-
-const filtered = allProducts.filter(p=>
-p.name.toLowerCase().includes(term) ||
-p.shop.toLowerCase().includes(term)
+const filtered=allProducts.filter(p=>
+p.name.toLowerCase().includes(term)
 );
 
 displayProducts(filtered);
 
 });
 
-}
-
-window.onload = fetchData;
+fetchData();
 
 </script>
+
+</body>
+</html>
