@@ -3,113 +3,224 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Săn Deal Affiliate</title>
+    <title>Shop Sản Phẩm Shopee</title>
     <style>
-        :root { --shopee-orange: #ee4d2d; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; margin: 0; padding: 20px; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        h2 { text-align: center; color: var(--shopee-orange); text-transform: uppercase; letter-spacing: 1px; }
-        .search-box { width: 100%; max-width: 500px; margin: 0 auto 30px; display: block; padding: 12px 20px; border: 2px solid var(--shopee-orange); border-radius: 25px; outline: none; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
-        .card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); transition: 0.3s; display: flex; flex-direction: column; }
-        .card:hover { transform: translateY(-5px); box-shadow: 0 5px 20px rgba(0,0,0,0.15); }
-        .img-box { width: 100%; padding-top: 100%; position: relative; background: #f9f9f9; }
-        .img-box img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
-        .info { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; }
-        .shop-name { font-size: 11px; color: #888; text-transform: uppercase; margin-bottom: 5px; }
-        .product-name { font-size: 14px; font-weight: 500; color: #333; height: 40px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; margin-bottom: 10px; line-height: 1.4; }
-        .price { color: var(--shopee-orange); font-size: 18px; font-weight: bold; margin-bottom: 15px; }
-        .btn-buy { background: var(--shopee-orange); color: white; text-decoration: none; text-align: center; padding: 10px; border-radius: 4px; font-weight: bold; font-size: 14px; transition: 0.2s; }
-        .btn-buy:hover { background: #d73211; }
-        .loading { text-align: center; font-style: italic; color: #666; grid-column: 1/-1; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            color: #ee4d2d;
+            margin-bottom: 30px;
+        }
+
+        .search-container {
+            max-width: 800px;
+            margin: 0 auto 30px;
+        }
+
+        #searchInput {
+            width: 100%;
+            padding: 12px 20px;
+            font-size: 16px;
+            border: 2px solid #ee4d2d;
+            border-radius: 25px;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .imgbox {
+            width: 100%;
+            aspect-ratio: 1/1;
+            background: #eee;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .imgbox img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .product-name {
+            font-size: 14px;
+            font-weight: 500;
+            margin: 5px 0;
+            height: 40px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 20px;
+        }
+
+        .price {
+            color: #ee4d2d;
+            font-weight: bold;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+
+        .shop-name {
+            font-size: 12px;
+            color: #757575;
+            margin-bottom: 10px;
+        }
+
+        .btn {
+            display: block;
+            text-align: center;
+            background: #ee4d2d;
+            color: #fff;
+            padding: 10px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: auto;
+        }
+
+        .btn:hover {
+            background: #d73211;
+        }
+
+        .loading {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 50px;
+            font-size: 18px;
+            color: #666;
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>🔥 KHO DEAL GIÁ HỜI 🔥</h2>
-    <input type="text" id="searchInput" class="search-box" placeholder="Tìm sản phẩm hoặc shop...">
-    
-    <div class="grid" id="productGrid">
-        <div class="loading">Đang kết nối dữ liệu từ hệ thống tệp tin...</div>
+    <h1>Sản Phẩm Shopee</h1>
+
+    <div class="search-container">
+        <input id="searchInput" type="text" placeholder="Tìm tên sản phẩm hoặc shop...">
     </div>
-</div>
 
-<script>
-    // Cấu hình các thư mục chứa dữ liệu CSV của anh
-    const FOLDERS = ["data/csv_shopee/", "data/csv_scraper/"];
-    let allProducts = [];
+    <div id="productGrid" class="grid">
+        <div class="loading">Đang tải dữ liệu...</div>
+    </div>
 
-    async function fetchData() {
-        allProducts = []; // Làm sạch danh sách trước khi nạp
-        
-        for (const folder of FOLDERS) {
-            // Tự động tìm từ file shop_data_1.csv đến shop_data_50.csv
-            for (let i = 1; i <= 50; i++) {
-                const fileName = `shop_data_${i}.csv`; 
-                try {
-                    const response = await fetch(folder + fileName);
-                    
-                    // Nếu không có file số này thì dừng tìm trong thư mục này và chuyển sang thư mục tiếp theo
-                    if (!response.ok) break; 
+    <script>
+        // Sử dụng định dạng TSV để tránh lỗi dấu phẩy trong tên sản phẩm
+        const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6o3x_ZHmwp0UFTMCXkUuFMWpXuLaKjO29mVSSho1b0Uo9Nk_ICRUCwF-aLD9IO5PLHTO2AUiw555j/pub?gid=0&single=true&output=tsv";
 
-                    const data = await response.text();
-                    const rows = data.split('\n').slice(1); // Bỏ dòng tiêu đề
+        let allProducts = [];
 
-                    const productsFromFile = rows.map(row => {
-                        // Nhận diện file dùng dấu phẩy (CSV chuẩn) hoặc Tab (TSV)
-                        const cols = row.includes('\t') ? row.split('\t') : row.split(',');
-                        return {
-                            shop: cols[0]?.trim() || "Cửa hàng",
-                            name: cols[1]?.trim(),
-                            price: cols[2]?.trim(),
-                            image: cols[3]?.trim(),
-                            link: cols[4]?.trim()
-                        };
-                    }).filter(p => p.name && p.link);
+        // Hàm xử lý link ảnh Shopee thông minh hơn
+        function fixShopeeImage(url) {
+            if (!url) return "https://via.placeholder.com/300?text=Shopee";
+            url = url.trim();
+            
+            // Nếu là mã MD5 (32 ký tự)
+            if (url.length === 32) return "https://cf.shopee.vn/file/" + url;
+            
+            // Nếu chứa mã MD5 trong link phức tạp
+            const match = url.match(/([a-f0-9]{32})/);
+            if (match && !url.includes("http")) {
+                return "https://cf.shopee.vn/file/" + match[1];
+            }
+            
+            return url;
+        }
 
-                    allProducts = allProducts.concat(productsFromFile);
-                } catch (err) {
-                    break; 
-                }
+        async function fetchData() {
+            try {
+                // Thêm timestamp để tránh cache trình duyệt
+                const response = await fetch(`${SHEET_URL}&t=${new Date().getTime()}`);
+                const text = await response.text();
+                
+                // Tách theo dòng
+                const rows = text.split(/\r?\n/).filter(row => row.trim() !== "");
+                
+                // Chuyển đổi dữ liệu (Bỏ qua dòng tiêu đề)
+                allProducts = rows.slice(1).map(row => {
+                    const columns = row.split("\t"); // Tách bằng Tab
+                    return {
+                        shop: columns[0] ? columns[0].trim() : "Shopee",
+                        name: columns[1] ? columns[1].trim() : "",
+                        price: columns[2] ? columns[2].trim() : "Liên hệ",
+                        image: fixShopeeImage(columns[3]),
+                        link: columns[4] ? columns[4].trim() : "#"
+                    };
+                }).filter(p => p.name !== "");
+
+                displayProducts(allProducts);
+            } catch (error) {
+                console.error("Lỗi:", error);
+                document.getElementById("productGrid").innerHTML = 
+                    "<div class='loading'>❌ Không thể tải dữ liệu. Vui lòng kiểm tra lại cấu hình Google Sheets!</div>";
             }
         }
-        displayProducts(allProducts);
-    }
 
-    function displayProducts(products) {
-        const grid = document.getElementById('productGrid');
-        if (products.length === 0) {
-            grid.innerHTML = "<div class='loading'>Không tìm thấy dữ liệu. Hãy đảm bảo tệp tin được đặt tên là shop_data_1.csv...</div>";
-            return;
-        }
-        grid.innerHTML = products.map(p => `
-            <div class="card">
-                <div class="img-box">
-                    <img src="${p.image}" onerror="this.src='https://via.placeholder.com/400?text=Hình+Sản+Phẩm'">
-                </div>
-                <div class="info">
-                    <div class="shop-name">🏪 ${p.shop}</div>
-                    <div class="product-name">${p.name}</div>
+        function displayProducts(products) {
+            const grid = document.getElementById("productGrid");
+            
+            if (products.length === 0) {
+                grid.innerHTML = "<div class='loading'>Không tìm thấy sản phẩm nào</div>";
+                return;
+            }
+
+            grid.innerHTML = products.map(p => `
+                <div class="card">
+                    <div class="imgbox">
+                        <img src="${p.image}" 
+                             alt="${p.name}" 
+                             loading="lazy"
+                             onerror="this.src='https://via.placeholder.com/300?text=Shopee'">
+                    </div>
+                    <div class="product-name" title="${p.name}">${p.name}</div>
                     <div class="price">${p.price}</div>
-                    <a href="${p.link}" target="_blank" class="btn-buy">SĂN DEAL NGAY</a>
+                    <div class="shop-name">🏪 ${p.shop}</div>
+                    <a href="${p.link}" target="_blank" rel="nofollow" class="btn">Mua ngay</a>
                 </div>
-            </div>
-        `).join('');
-    }
+            `).join("");
+        }
 
-    // Bộ lọc tìm kiếm thời gian thực
-    document.getElementById('searchInput').addEventListener('input', (e) => {
-        const term = e.target.value.toLowerCase();
-        const filtered = allProducts.filter(p => 
-            (p.name && p.name.toLowerCase().includes(term)) || 
-            (p.shop && p.shop.toLowerCase().includes(term))
-        );
-        displayProducts(filtered);
-    });
+        // Tìm kiếm sản phẩm (Xử lý cả tên và tên Shop)
+        document.getElementById("searchInput").addEventListener("input", (e) => {
+            const term = e.target.value.toLowerCase().trim();
+            const filtered = allProducts.filter(p => 
+                p.name.toLowerCase().includes(term) || 
+                p.shop.toLowerCase().includes(term)
+            );
+            displayProducts(filtered);
+        });
 
-    window.onload = fetchData;
-</script>
-
+        // Khởi chạy
+        fetchData();
+    </script>
 </body>
 </html>
