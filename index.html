@@ -10,33 +10,35 @@
             for (let i = 1; i <= 50; i++) {
                 const fileName = `shop_data_${i}.csv`; 
                 try {
-                    const response = await fetch(folder + fileName + '?v=' + Math.random());
+                    const response = await fetch(folder + fileName + '?v=' + Date.now());
                     if (!response.ok) continue; 
 
                     const text = await response.text();
                     if (!text || text.trim() === "") continue;
 
-                    const rows = text.split(/\r?\n/);
-                    const productsFromFile = rows.slice(1) // Bỏ tiêu đề
-                        .map(row => {
-                            // Xử lý tách cột an toàn hơn
-                            const cols = row.split(',').map(c => c.replace(/^"|"$/g, '').trim());
-                            if (cols.length < 4) return null; // Bỏ qua dòng thiếu dữ liệu
-
-                            return {
-                                shop:  cols[0] || "Shopee",
-                                name:  cols[1] || "Sản phẩm",
-                                price: cols[2] || "Săn ngay",
-                                image: cols[3] || "", // Cột D
-                                link:  cols[4] || "#"
-                            };
-                        })
-                        .filter(p => p !== null && p.image !== "");
-
-                    allProducts = allProducts.concat(productsFromFile);
+                    // Tách dòng an toàn
+                    const rows = text.split(/\r?\n/).filter(r => r.trim() !== "");
+                    
+                    for (let j = 1; j < rows.length; j++) {
+                        try {
+                            // Xử lý tách cột cực kỳ cẩn thận
+                            const cols = rows[j].split(',').map(c => c.replace(/^"|"$/g, '').trim());
+                            
+                            if (cols.length >= 4 && cols[3] !== "") {
+                                allProducts.push({
+                                    shop:  cols[0] || "Shopee",
+                                    name:  cols[1] || "Sản phẩm",
+                                    price: cols[2] || "Săn deal ngay",
+                                    image: cols[3], // Link ảnh ở cột D
+                                    link:  cols[4] || "#"
+                                });
+                            }
+                        } catch (lineError) {
+                            console.warn("Bỏ qua 1 dòng lỗi tại file: " + fileName);
+                        }
+                    }
                 } catch (err) {
-                    console.error("Lỗi đọc file: " + fileName, err);
-                    continue; // Lỗi file này thì chạy file kế tiếp, không dừng lại
+                    console.error("Không thể đọc file: " + fileName);
                 }
             }
         }
@@ -46,12 +48,12 @@
     function displayProducts(products) {
         const grid = document.getElementById('productGrid');
         if (!products || products.length === 0) {
-            grid.innerHTML = "<div class='loading'>⚠️ Không tìm thấy dữ liệu ảnh ở cột D. Vui lòng kiểm tra lại tệp CSV.</div>";
+            grid.innerHTML = "<div class='loading'>⚠️ Hệ thống đang chờ dữ liệu mới từ Sheet. <br> Hãy đảm bảo cột D đã có link ảnh và file CSV đã được đẩy lên GitHub.</div>";
             return;
         }
 
         grid.innerHTML = products.map(p => {
-            // Tự động sửa link ảnh Shopee nếu chỉ có mã ID
+            // Sửa link ảnh Shopee tự động
             let cleanImg = p.image;
             if (cleanImg && !cleanImg.startsWith('http')) {
                 cleanImg = "https://down-bs-vn.img.susercontent.com/vn-" + cleanImg;
@@ -72,15 +74,6 @@
             `;
         }).join('');
     }
-
-    document.getElementById('searchInput').addEventListener('input', (e) => {
-        const term = e.target.value.toLowerCase();
-        const filtered = allProducts.filter(p => 
-            (p.name && p.name.toLowerCase().includes(term)) || 
-            (p.shop && p.shop.toLowerCase().includes(term))
-        );
-        displayProducts(filtered);
-    });
 
     window.onload = fetchData;
 </script>
