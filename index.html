@@ -44,11 +44,8 @@ box-shadow:0 2px 5px rgba(0,0,0,0.1);
 width:100%;
 height:200px;
 background:#eee;
-display:flex;
-align-items:center;
-justify-content:center;
-overflow:hidden;
 border-radius:6px;
+overflow:hidden;
 }
 
 .imgbox img{
@@ -96,7 +93,7 @@ font-size:18px;
 <input id="searchInput" placeholder="Tìm sản phẩm...">
 
 <div id="productGrid" class="grid">
-<div class="loading">Đang tải sản phẩm...</div>
+<div class="loading">Đang tải...</div>
 </div>
 
 <script>
@@ -105,11 +102,25 @@ const SHEET_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vS6o3x_ZHmwp0UF
 
 let allProducts=[];
 
+function fixShopeeImage(url){
+
+if(!url) return "";
+
+const match=url.match(/([a-f0-9]{32,})/);
+
+if(match){
+return "https://cf.shopee.vn/file/"+match[1];
+}
+
+return url;
+
+}
+
 async function fetchData(){
 
 try{
 
-const res=await fetch(SHEET_URL+"&t="+Date.now());
+const res=await fetch(SHEET_URL+"?t="+Date.now());
 const text=await res.text();
 
 const rows=text.split(/\r?\n/).filter(r=>r.trim()!="");
@@ -118,17 +129,11 @@ allProducts=rows.slice(1).map(r=>{
 
 const c=r.split(",");
 
-let img=c[3]||"";
-
-if(!img.startsWith("http")){
-img="https://cf.shopee.vn/file/"+img;
-}
-
 return{
 shop:c[0]||"",
 name:c[1]||"",
 price:c[2]||"",
-image:img,
+image:fixShopeeImage(c[3]),
 link:c[4]||"#"
 };
 
