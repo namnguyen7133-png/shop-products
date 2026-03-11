@@ -4,100 +4,101 @@ const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6o3x_ZHmwp0
 
 let allProducts = [];
 
-async function fetchData() {
+async function fetchData(){
 
-    try {
+try{
 
-        const response = await fetch(SHEET_URL + "&t=" + Date.now(), {
-            method: "GET",
-            cache: "no-store"
-        });
+const response = await fetch(SHEET_URL + "&t=" + Date.now(),{
+method:"GET",
+cache:"no-store"
+});
 
-        const text = await response.text();
+const text = await response.text();
 
-        const rows = text.split(/\r?\n/).filter(r => r.trim() !== "");
+const rows = text.split(/\r?\n/).filter(r=>r.trim()!=="");
 
-        allProducts = rows.slice(1).map(row => {
+allProducts = rows.slice(1).map(row=>{
 
-            const cols = row.split("\t");
+const cols = row.split("\t");
 
-            return {
-                shop: cols[0] || "Shopee",
-                name: cols[1] || "Sản phẩm",
-                price: cols[2] || "Săn deal ngay",
-                image: cols[3] || "",
-                link: cols[4] || "#"
-            };
+return{
+shop: cols[0] || "Shopee",
+name: cols[1] || "Sản phẩm",
+price: cols[2] || "",
+image: cols[3] || "",
+link: cols[4] || "#"
+};
 
-        }).filter(p => p.image !== "");
+}).filter(p=>p.image !== "");
 
-        displayProducts(allProducts);
+displayProducts(allProducts);
 
-    } catch (err) {
+}catch(err){
 
-        console.error(err);
+console.error(err);
 
-        document.getElementById("productGrid").innerHTML =
-        "<div class='loading'>❌ Không tải được dữ liệu</div>";
-
-    }
+document.getElementById("productGrid").innerHTML =
+"<div style='padding:20px'>❌ Không tải được dữ liệu</div>";
 
 }
 
-function displayProducts(products) {
+}
 
-    const grid = document.getElementById("productGrid");
+function displayProducts(products){
 
-    if (products.length === 0) {
+const grid = document.getElementById("productGrid");
 
-        grid.innerHTML = "<div class='loading'>⚠️ Chưa có sản phẩm</div>";
+if(!grid) return;
 
-        return;
+if(products.length===0){
 
-    }
+grid.innerHTML="<div style='padding:20px'>⚠️ Chưa có sản phẩm</div>";
+return;
 
-    grid.innerHTML = products.map(p => {
+}
 
-        let cleanImg = p.image;
+grid.innerHTML = products.map(p=>{
 
-        if (cleanImg && !cleanImg.startsWith("http")) {
-            cleanImg = "https://cf.shopee.vn/file/" + cleanImg;
-        }
+let cleanImg = p.image;
 
-        return `
+if(cleanImg && !cleanImg.startsWith("http")){
+cleanImg = "https://cf.shopee.vn/file/" + cleanImg;
+}
 
-        <div class="card">
+return `
 
-            <div class="img-box">
-                <img src="${cleanImg}" loading="lazy"
-                onerror="this.src='https://via.placeholder.com/400?text=Shopee'">
-            </div>
+<div class="card">
 
-            <div class="info">
+<div class="img-box">
+<img src="${cleanImg}" loading="lazy"
+onerror="this.src='https://via.placeholder.com/400?text=Shopee'">
+</div>
 
-                <div class="shop-name">🏪 ${escapeHTML(p.shop)}</div>
+<div class="info">
 
-                <div class="product-name">${escapeHTML(p.name)}</div>
+<div class="shop-name">🏪 ${escapeHTML(p.shop)}</div>
 
-                <div class="price">${escapeHTML(p.price)}</div>
+<div class="product-name">${escapeHTML(p.name)}</div>
 
-                <a href="${p.link}" target="_blank"
-                rel="nofollow sponsored"
-                class="btn-buy">SĂN DEAL NGAY</a>
+<div class="price">${escapeHTML(p.price)}</div>
 
-            </div>
+<a href="${p.link}" target="_blank"
+rel="nofollow sponsored"
+class="btn-buy">SĂN DEAL NGAY</a>
 
-        </div>
+</div>
 
-        `;
+</div>
 
-    }).join("");
+`;
+
+}).join("");
 
 }
 
 function escapeHTML(str){
 
-return str.replace(/[&<>"']/g, m => ({
+return String(str).replace(/[&<>"']/g,m=>({
 "&":"&amp;",
 "<":"&lt;",
 ">":"&gt;",
@@ -107,11 +108,15 @@ return str.replace(/[&<>"']/g, m => ({
 
 }
 
-document.getElementById("searchInput").addEventListener("input", e => {
+const search = document.getElementById("searchInput");
+
+if(search){
+
+search.addEventListener("input",e=>{
 
 const term = e.target.value.toLowerCase();
 
-const filtered = allProducts.filter(p =>
+const filtered = allProducts.filter(p=>
 p.name.toLowerCase().includes(term) ||
 p.shop.toLowerCase().includes(term)
 );
@@ -119,6 +124,8 @@ p.shop.toLowerCase().includes(term)
 displayProducts(filtered);
 
 });
+
+}
 
 window.onload = fetchData;
 
